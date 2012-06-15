@@ -87,7 +87,8 @@ class tinyMCE {
 	 * @return void
 	 */
 	protected function setLanguage() {
-		$languageInstance = (TYPO3_MODE == 'FE' ? $GLOBALS['TSFE'] : $GLOBALS['LANG']);
+		/** @var $languageInstance language */
+		$languageInstance = (TYPO3_MODE === 'FE' ? $GLOBALS['TSFE'] : $GLOBALS['LANG']);
 		$languageKey = $languageInstance->lang;
 
 		$groupOrUserProps = t3lib_BEfunc::getModTSconfig('', 'tx_tinyMCE');
@@ -96,8 +97,16 @@ class tinyMCE {
 		}
 
 			// language conversion from TLD to iso631
-		if (array_key_exists($languageKey, $languageInstance->csConvObj->isoArray)) {
-			$languageKey = $languageInstance->csConvObj->isoArray[$languageKey];
+		if (class_exists('t3lib_l10n_Locales')) {
+			/** @var $locales t3lib_l10n_Locales */
+			$locales = t3lib_div::makeInstance('t3lib_l10n_Locales');
+			$isoArray = $locales->getIsoMapping();
+		} else {
+			$isoArray = $languageInstance->csConvObj->isoArray;
+		}
+
+		if (array_key_exists($languageKey, $isoArray)) {
+			$languageKey = $isoArray[$languageKey];
 		}
 
 		$languageFile = PATH_site . t3lib_extMgm::siteRelPath('tinymce') . 'tinymce/langs/' . $languageKey . '.js';
