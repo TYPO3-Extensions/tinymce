@@ -120,11 +120,12 @@ class tinyMCE {
 	/**
 	 * Returns a configuration string from the tinymce configuration array
 	 *
+	 * @param boolean $compressedConfiguration
 	 * @return string
 	 */
-	protected function buildConfigString() {
+	protected function buildConfigString($compressedConfiguration) {
 		$configuration = $this->tinymceConfiguration['preJS'];
-		$configuration .= ($this->extensionConfiguration['compressed'] ? 'tinyMCE_GZ' : 'tinyMCE');
+		$configuration .= ($compressedConfiguration ? 'tinyMCE_GZ' : 'tinyMCE');
 		$configuration .= '.init({' . "\n";
 
 		$configurationOptions = array();
@@ -164,8 +165,11 @@ class tinyMCE {
 
 		$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/' .
 			($this->extensionConfiguration['compressed'] ? 'tiny_mce_gzip.js' : 'tiny_mce.js');
-		$output = '<script type="text/javascript" src="' . $script . '"></script>
-			<script type="text/javascript">' . "\n" . $this->buildConfigString() . "\n" . '</script>';
+		$output = '<script type="text/javascript" src="' . $script . '"></script>';
+		if ($this->extensionConfiguration['compressed']) {
+			$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString(TRUE) . "\n" . '</script>';
+		}
+		$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString(FALSE) . "\n" . '</script>';
 
 		return $output;
 	}
