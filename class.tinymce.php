@@ -33,13 +33,6 @@
  */
 class tinyMCE {
 	/**
-	 * Internal extension configuration array
-	 *
-	 * @var array
-	 */
-	protected $extensionConfiguration = array();
-
-	/**
 	 * TinyMCE configuration
 	 *
 	 * @var array
@@ -54,13 +47,6 @@ class tinyMCE {
 	static protected $init = FALSE;
 
 	/**
-	 * Constructor
-	 */
-	public function __construct() {
-		$this->extensionConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['tinymce']);
-	}
-
-	/**
 	 * @param string $configuration file reference or configuration string (defaults to basic configuration)
 	 * @param boolean $forceLanguage set this to true if you want to force your language set by the configuration
 	 * @return void
@@ -71,10 +57,6 @@ class tinyMCE {
 
 		if (!$forceLanguage) {
 			$this->setLanguage();
-		}
-
-		if ($this->extensionConfiguration['compressed']) {
-			$this->tinymceConfiguration['disk_cache'] = ($this->extensionConfiguration['diskCache'] ? 'true' : 'false');
 		}
 	}
 
@@ -117,13 +99,11 @@ class tinyMCE {
 	/**
 	 * Returns a configuration string from the tinymce configuration array
 	 *
-	 * @param boolean $compressedConfiguration
 	 * @return string
 	 */
-	protected function buildConfigString($compressedConfiguration) {
+	protected function buildConfigString() {
 		$configuration = $this->tinymceConfiguration['preJS'];
-		$configuration .= ($compressedConfiguration ? 'tinyMCE_GZ' : 'tinyMCE');
-		$configuration .= '.init({' . "\n";
+		$configuration .= 'tinymce.init({' . "\n";
 
 		$configurationOptions = array();
 		if (count($this->tinymceConfiguration)) {
@@ -160,13 +140,9 @@ class tinyMCE {
 		}
 		self::$init = TRUE;
 
-		$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/' .
-			($this->extensionConfiguration['compressed'] ? 'tiny_mce_gzip.js' : 'tiny_mce.js');
+		$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
 		$output = '<script type="text/javascript" src="' . $script . '"></script>';
-		if ($this->extensionConfiguration['compressed']) {
-			$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString(TRUE) . "\n" . '</script>';
-		}
-		$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString(FALSE) . "\n" . '</script>';
+		$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString() . "\n" . '</script>';
 
 		return $output;
 	}
@@ -185,7 +161,7 @@ class tinyMCE {
 
 		// split config into first and last javascript parts (applied later again into the config variables)
 		// additionally the config part is matched to get the options
-		$start = '(.*)((tinyMCE|tinyMCE_GZ)\.init.*?\(.*?\{.*?';
+		$start = '(.*)((tinymce|tinyMCE|tinyMCE_GZ)\.init.*?\(.*?\{.*?';
 		$end = '.*?\}.*?\).*?;)(.*)';
 		$pattern = '/' . $start . $end . '/is';
 		preg_match($pattern, $configuration, $matches);
