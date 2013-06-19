@@ -1,5 +1,5 @@
-# cat=basic/enable; type=boolean; label= Use Compressed Script: Serverside GZip compresses TinyMCE to reduce overall download size. Makes TinyMCE 75% smaller and a lot faster to load.
+# cat=basic/enable; type=boolean; label= Use Compressed Script: Server-side GZip compresses TinyMCE to reduce the overall download size.
 compressed = 1
 
-# cat=basic/enable; type=boolean; label= Use Disk Cache: Enables Disk Cache if serverside GZip compression activated to increase the performance.
+# cat=basic/enable; type=boolean; label= Use Disk Cache: Enables Disk Cache if server-side GZip compression is activated to increase the performance.
 diskCache = 1

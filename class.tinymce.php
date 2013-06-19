@@ -1,8 +1,9 @@
 <?php
+
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2005-2012 Stefan Galinski (stefan.galinski@gmail.com)
+ *  (c) Stefan Galinski (stefan.galinski@gmail.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -29,22 +30,18 @@
  * $tinyMCE = t3lib_div::makeInstance('tinyMCE');
  * $tinyMCE->loadConfiguration($configuration);
  * $javascript = $tinyMCE->getJS();
- *
- * @author Stefan Galinski <stefan.galinski@gmail.com>
- * @package TYPO3
- * @subpackage tx_tinymce
  */
 class tinyMCE {
 	/**
 	 * Internal extension configuration array
-	 * 
+	 *
 	 * @var array
 	 */
 	protected $extensionConfiguration = array();
 
 	/**
 	 * TinyMCE configuration
-	 * 
+	 *
 	 * @var array
 	 */
 	protected $tinymceConfiguration = array();
@@ -82,8 +79,8 @@ class tinyMCE {
 	}
 
 	/**
-	 * Calculates and sets the current language 
-	 * 
+	 * Calculates and sets the current language
+	 *
 	 * @return void
 	 */
 	protected function setLanguage() {
@@ -96,7 +93,7 @@ class tinyMCE {
 			$languageKey = $groupOrUserProps['properties']['prefLang'];
 		}
 
-			// language conversion from TLD to iso631
+		// language conversion from TLD to iso631
 		if (class_exists('t3lib_l10n_Locales')) {
 			/** @var $locales t3lib_l10n_Locales */
 			$locales = t3lib_div::makeInstance('t3lib_l10n_Locales');
@@ -186,18 +183,18 @@ class tinyMCE {
 			$configuration = file_get_contents($configuration);
 		}
 
-			// split config into first and last javascript parts (applied later again into the config variables)
-			// additionally the config part is matched to get the options
+		// split config into first and last javascript parts (applied later again into the config variables)
+		// additionally the config part is matched to get the options
 		$start = '(.*)((tinyMCE|tinyMCE_GZ)\.init.*?\(.*?\{.*?';
 		$end = '.*?\}.*?\).*?;)(.*)';
 		$pattern = '/' . $start . $end . '/is';
 		preg_match($pattern, $configuration, $matches);
 
-			// add preJS and postJS
+		// add preJS and postJS
 		$configurationArray['preJS'] = $matches[1];
 		$configurationArray['postJS'] = $matches[4];
 
-			// split options into an array (first time strings and the second call splits bool values)
+		// split options into an array (first time strings and the second call splits bool values)
 		$pattern = '([[:print:]]+?)[\s]*?:[\s]*["|\']{1}(.*?)["|\']{1}[,|\n|}]{1}.*?';
 		preg_match_all('/' . $pattern . '/i', $matches[2], $options);
 		for ($i = 0; $i < count($options[1]); ++$i) {
