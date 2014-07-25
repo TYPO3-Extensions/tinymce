@@ -3,13 +3,14 @@
 /***************************************************************
  *  Copyright notice
  *
- *  (c) Stefan Galinski (stefan.galinski@gmail.com)
+ *  (c) sgalinski Internet Services (http://www.sgalinski.de)
+ *
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
  *  free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  The GNU General Public License can be found at
@@ -17,7 +18,7 @@
  *
  *  This script is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
@@ -34,7 +35,7 @@
  * Basic Configuration:
  *
  * tinymce.init({
- *	selector: 'textarea',
+ *    selector: 'textarea'
  * });
  */
 class tinyMCE {
@@ -112,18 +113,24 @@ class tinyMCE {
 		$configuration .= 'tinymce.init({' . "\n";
 
 		$configurationOptions = array();
-		if (count($this->tinymceConfiguration)) {
-			foreach ($this->tinymceConfiguration as $option => $value) {
-				if (in_array($option, array('preJS', 'postJS'))) {
-					continue;
-				}
+		foreach ($this->tinymceConfiguration as $option => $value) {
+			if (in_array($option, array('preJS', 'postJS'))) {
+				continue;
+			}
 
-				if (!in_array($value, array('false', 'true'))) {
+			if (!in_array($value, array('false', 'true'))) {
+				if (is_numeric($value)) {
+					if (strpos($value, '.')) {
+						$value = (float) $value;
+					} else {
+						$value = (int) $value;
+					}
+				} else {
 					$value = '\'' . $value . '\'';
 				}
-
-				$configurationOptions[] = "\t" . $option . ' : ' . $value;
 			}
+
+			$configurationOptions[] = "\t" . $option . ': ' . $value;
 		}
 		$configuration .= implode(",\n", $configurationOptions);
 		$configuration .= "\n" . '});';
