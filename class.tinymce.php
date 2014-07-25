@@ -30,6 +30,12 @@
  * $tinyMCE = t3lib_div::makeInstance('tinyMCE');
  * $tinyMCE->loadConfiguration($configuration);
  * $javascript = $tinyMCE->getJS();
+ *
+ * Basic Configuration:
+ *
+ * tinymce.init({
+ *	selector: 'textarea',
+ * });
  */
 class tinyMCE {
 	/**
