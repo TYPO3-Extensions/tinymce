@@ -12,10 +12,10 @@
 
 $EM_CONF[$_EXTKEY] = array (
 	'title' => 'tinyMCE',
-	'description' => 'tinymce sources with compressor and spellchecker',
+	'description' => 'TinyMCE sources including a PHP API',
 	'category' => 'misc',
 	'shy' => false,
-	'version' => '4.0.28',
+	'version' => '4.1.2',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
@@ -28,8 +28,8 @@ $EM_CONF[$_EXTKEY] = array (
 	'clearcacheonload' => false,
 	'lockType' => '',
 	'author' => 'Stefan Galinski',
-	'author_email' => 'stefan.galinski@gmail.com',
-	'author_company' => '',
+	'author_email' => 'stefan@sgalinski.de',
+	'author_company' => 'sgalinski Internet Services',
 	'CGLcompliance' => NULL,
 	'CGLcompliance_note' => NULL,
 	'constraints' => 
