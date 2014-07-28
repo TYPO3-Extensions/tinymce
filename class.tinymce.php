@@ -61,7 +61,6 @@ class tinyMCE {
 	public function loadConfiguration($configuration = '', $forceLanguage = FALSE) {
 		self::$init = FALSE;
 		$this->tinymceConfiguration = $this->prepareTinyMCEConfiguration($configuration);
-
 		if (!$forceLanguage) {
 			$this->setLanguage();
 		}
@@ -100,7 +99,7 @@ class tinyMCE {
 			$languageKey = 'en';
 		}
 
-		$this->tinymceConfiguration['language'] = $languageKey;
+		$this->addConfigurationOption('language', $languageKey);
 	}
 
 	/**
@@ -110,30 +109,40 @@ class tinyMCE {
 	 */
 	protected function buildConfigString() {
 		$configuration = $this->tinymceConfiguration['preJS'];
-		$configuration .= 'tinymce.init({' . "\n";
+		$configuration .= "\n" . 'tinymce.init({' . "\n";
 
-		$configurationOptions = array();
-		foreach ($this->tinymceConfiguration as $option => $value) {
-			if (in_array($option, array('preJS', 'postJS'))) {
-				continue;
-			}
+//		$configurationOptions = array();
+//		foreach ($this->tinymceConfiguration['strings'] as $option => $value) {
+//			$value = '\'' . str_replace('\'', '\\\'', $value) . '\'';
+//			$configurationOptions[] = "\t" . $option . ': ' . $value;
+//		}
+//
+//		foreach ($this->tinymceConfiguration['boolAndInt'] as $option => $value) {
+//			if (is_numeric($value)) {
+//				if (strpos($value, '.')) {
+//					$value = (float) $value;
+//				} else {
+//					$value = (int) $value;
+//				}
+//			}
+//			$configurationOptions[] = "\t" . $option . ': ' . $value;
+//		}
+//
+//		foreach ($this->tinymceConfiguration['arrays'] as $option => $value) {
+//			$configurationOptions[] = "\t" . $option . ': ' . $value;
+//		}
+//
+//		foreach ($this->tinymceConfiguration['objects'] as $option => $value) {
+//			$configurationOptions[] = "\t" . $option . ': ' . $value;
+//		}
+//
+//		foreach ($this->tinymceConfiguration['functions'] as $option => $value) {
+//			$configurationOptions[] = "\t" . $option . ': ' . $value;
+//		}
+//		$configuration .= implode(",\n", $configurationOptions);
 
-			if (!in_array($value, array('false', 'true'))) {
-				if (is_numeric($value)) {
-					if (strpos($value, '.')) {
-						$value = (float) $value;
-					} else {
-						$value = (int) $value;
-					}
-				} else {
-					$value = '\'' . $value . '\'';
-				}
-			}
-
-			$configurationOptions[] = "\t" . $option . ': ' . $value;
-		}
-		$configuration .= implode(",\n", $configurationOptions);
-		$configuration .= "\n" . '});';
+		$configuration .= $this->tinymceConfiguration['configurationData'];
+		$configuration .= "\n" . '});' . "\n";
 		$configuration .= $this->tinymceConfiguration['postJS'];
 
 		return $configuration;
@@ -148,14 +157,12 @@ class tinyMCE {
 	 */
 	public function getJS() {
 		$output = '';
-		if (self::$init) {
-			return $output;
+		if (!self::$init) {
+			self::$init = TRUE;
+			$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
+			$output = '<script type="text/javascript" src="' . $script . '"></script>';
+			$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString() . "\n" . '</script>';
 		}
-		self::$init = TRUE;
-
-		$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
-		$output = '<script type="text/javascript" src="' . $script . '"></script>';
-		$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString() . "\n" . '</script>';
 
 		return $output;
 	}
@@ -163,41 +170,77 @@ class tinyMCE {
 	/**
 	 * Parses and processes the tinyMCE configuration
 	 *
+	 * Note: Unfortunately we didn't solved the riddle how to parse object and function blocks. So we can't parse
+	 * the configuration in detail. Also the regexp has some other possible minor flaws. Recursion (?R) could be a
+	 * possible way.
+	 *
 	 * @param string $configuration file reference or configuration string
 	 * @return array
 	 */
 	protected function prepareTinyMCEConfiguration($configuration) {
 		$configurationArray = array();
-		if (is_file($configuration)) {
-			$configuration = file_get_contents($configuration);
+
+		// try to resolve a potential TYPO3 file path
+		$configurationFile = t3lib_div::getFileAbsFileName($configuration);
+		if (is_file($configurationFile)) {
+			$configuration = file_get_contents($configurationFile);
 		}
 
 		// split config into first and last javascript parts (applied later again into the config variables)
 		// additionally the config part is matched to get the options
-		$start = '(.*)((tinymce|tinyMCE|tinyMCE_GZ)\.init.*?\(.*?\{.*?';
-		$end = '.*?\}.*?\).*?;)(.*)';
-		$pattern = '/' . $start . $end . '/is';
+		$pattern = '/(.*)tinymce\.init\s*\(\s*\{(.*?)\}\s*\)\s*;?(.*)/is';
 		preg_match($pattern, $configuration, $matches);
 
 		// add preJS and postJS
-		$configurationArray['preJS'] = $matches[1];
-		$configurationArray['postJS'] = $matches[4];
+		$configurationArray['preJS'] = trim($matches[1]);
+		$configurationArray['configurationData'] = trim($matches[2]);
+		$configurationArray['postJS'] = trim($matches[3]);
 
-		// split options into an array (first time strings and the second call splits bool values)
-		$pattern = '([[:print:]]+?)[\s]*?:[\s]*["|\']{1}(.*?)["|\']{1}[,|\n|}]{1}.*?';
-		preg_match_all('/' . $pattern . '/i', $matches[2], $options);
-		for ($i = 0; $i < count($options[1]); ++$i) {
-			$configurationArray[$options[1][$i]] = $options[2][$i];
-		}
-
-		$options = array();
-		$boolPattern = '([[:print:]]+?)[\s]*?:[\s]*(false|true)[,|\n|}]{1}.*?';
-		preg_match_all('/' . $boolPattern . '/i', $matches[2], $options);
-		for ($i = 0; $i < count($options[1]); ++$i) {
-			$configurationArray[$options[1][$i]] = $options[2][$i];
-		}
+		// split options into an array (four value types: values in quotes, int/booleans, arrays, objects, functions)
+//		$pattern = '([^:\[\(\{]+?)\s*:\s*(?:(\[.*?\])|(\{.*\})|(function.*\})|["\']([^"\']*)["|\']\s*|([^,\n]*))[,\n]\n?';
+//		preg_match_all('/' . $pattern . '/is', $matches[2] . "\n", $options);
+//		for ($i = 0; $i < count($options[1]); ++$i) {
+//			if (trim($options[2][$i]) !== '') {
+//				// array
+//				$configurationArray['arrays'][trim($options[1][$i])] = trim($options[2][$i]);
+//			} elseif (trim($options[3][$i]) !== '') {
+//				// object
+//				$configurationArray['objects'][trim($options[1][$i])] = trim($options[3][$i]);
+//			} elseif (trim($options[4][$i]) !== '') {
+//				// function
+//				$configurationArray['functions'][trim($options[1][$i])] = trim($options[4][$i]);
+//			} elseif (trim($options[6][$i]) !== '') {
+//				// int/bool
+//				$configurationArray['boolAndInt'][trim($options[1][$i])] = trim($options[6][$i]);
+//			} else {
+//				// quoted value (value can be empty)
+//				$configurationArray['strings'][trim($options[1][$i])] = trim($options[5][$i]);
+//			}
+//		}
 
 		return $configurationArray;
+	}
+
+	/**
+	 * Adds a basic configuration value to the parsed configuration
+	 *
+	 * @param string $key
+	 * @param mixed $value
+	 */
+	public function addConfigurationOption($key, $value) {
+		if (is_numeric($value)) {
+			if (strpos($value, '.')) {
+				$value = (float) $value;
+			} else {
+				$value = (int) $value;
+			}
+		} elseif (strpos(trim($value), '[') === FALSE && strpos(trim($value), '{') === FALSE &&
+			strpos(trim($value), 'function') === FALSE
+		) {
+			$value = '\'' . $value . '\'';
+		}
+
+		$this->tinymceConfiguration['configurationData'] .= ",\n" . $key . ': ' . $value . "\n";
 	}
 }
 
