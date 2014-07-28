@@ -141,7 +141,7 @@ class tinyMCE {
 //		}
 //		$configuration .= implode(",\n", $configurationOptions);
 
-		$configuration .= $this->tinymceConfiguration['configurationData'];
+		$configuration .= $this->replaceTypo3Paths($this->tinymceConfiguration['configurationData']);
 		$configuration .= "\n" . '});' . "\n";
 		$configuration .= $this->tinymceConfiguration['postJS'];
 
@@ -241,6 +241,36 @@ class tinyMCE {
 		}
 
 		$this->tinymceConfiguration['configurationData'] .= ",\n" . $key . ': ' . $value . "\n";
+	}
+
+	/**
+	 * Replaces any TYPO3 extension path with the domain prefixed one.
+	 *
+	 * @param string $configuration
+	 * @return string
+	 */
+	protected function replaceTypo3Paths($configuration) {
+		return preg_replace_callback(
+			'/["\'](EXT:[^"\']*)["\']/is', function ($value) {
+				return '\'' . $this->getPath($value[1], TRUE) . '\'';
+			}, $configuration
+		);
+	}
+
+	/**
+	 * Resolves a relative path like EXT:tinymce/... into an absolute one that contains either the
+	 * current host or the path to the file in the file system.
+	 *
+	 * @param string $relativePath
+	 * @param bool $returnWithDomain
+	 * @return string
+	 */
+	protected function getPath($relativePath, $returnWithDomain = FALSE) {
+		$finalPath = $absolutePath = t3lib_div::getFileAbsFileName($relativePath);
+		if ($returnWithDomain) {
+			$finalPath = t3lib_div::getIndpEnv('TYPO3_REQUEST_HOST') . '/' . str_replace(PATH_site, '', $absolutePath);
+		}
+		return $finalPath;
 	}
 }
 
