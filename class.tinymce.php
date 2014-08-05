@@ -103,13 +103,14 @@ class tinyMCE {
 	}
 
 	/**
-	 * Returns a configuration string from the tinymce configuration array
+	 * Returns a file that contains the the tinymce configuration
 	 *
+	 * @param bool $loadConfigurationWithTimer useful in relation with AJAX
 	 * @return string
 	 */
-	protected function buildConfigString() {
+	protected function buildConfigString($loadConfigurationWithTimer = FALSE) {
 		$configuration = $this->tinymceConfiguration['preJS'];
-		$configuration .= "\n" . 'tinymce.init({' . "\n";
+		$configuration .= "\n" . 'var executeTinymceInit = function() {' . "\n" . 'tinymce.init({' . "\n";
 
 //		$configurationOptions = array();
 //		foreach ($this->tinymceConfiguration['strings'] as $option => $value) {
@@ -142,10 +143,20 @@ class tinyMCE {
 //		$configuration .= implode(",\n", $configurationOptions);
 
 		$configuration .= $this->replaceTypo3Paths($this->tinymceConfiguration['configurationData']);
-		$configuration .= "\n" . '});' . "\n";
+		$configuration .= "\n" . '});' . "\n" . '};executeTinymceInit();' . "\n";
+		if ($loadConfigurationWithTimer) {
+			$configuration .= "\n" . 'window.setInterval(executeTinymceInit, 1000);' . "\n";
+		}
 		$configuration .= $this->tinymceConfiguration['postJS'];
 
-		return $configuration;
+		$filename = 'tinymceConfiguration' . md5($configuration) . '.js';
+		$file = PATH_site . 'typo3temp/' . $filename;
+		if (!is_file($file)) {
+			file_put_contents($file, $configuration);
+			t3lib_div::fixPermissions($file);
+		}
+
+		return $this->getPath($file, TRUE);
 	}
 
 	/**
@@ -153,18 +164,41 @@ class tinyMCE {
 	 *
 	 * Note: This function can only be called once for each loaded configuration.
 	 *
+	 * @param bool $loadConfigurationWithTimer
 	 * @return string
 	 */
-	public function getJS() {
+	public function getJS($loadConfigurationWithTimer = FALSE) {
 		$output = '';
 		if (!self::$init) {
 			self::$init = TRUE;
 			$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
 			$output = '<script type="text/javascript" src="' . $script . '"></script>';
-			$output .= '<script type="text/javascript">' . "\n" . $this->buildConfigString() . "\n" . '</script>';
+
+			$script = $this->buildConfigString($loadConfigurationWithTimer);
+			$output .= '<script type="text/javascript" src="' . $script . '"></script>';
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Loads the required javascript via the given page renderer instance
+	 *
+	 * @param t3lib_PageRenderer $pageRenderer
+	 * @param bool $loadConfigurationWithTimer
+	 * @return void
+	 */
+	public function loadJsViaPageRenderer(t3lib_PageRenderer $pageRenderer, $loadConfigurationWithTimer = FALSE) {
+		if (self::$init) {
+			return;
+		}
+		self::$init = TRUE;
+
+		$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
+		$pageRenderer->addJsLibrary('tinymce', $script, 'text/javascript', FALSE, TRUE, '', TRUE);
+
+		$script = $this->buildConfigString($loadConfigurationWithTimer);
+		$pageRenderer->addJsFile($script, 'text/javascript', FALSE, TRUE, '', TRUE);
 	}
 
 	/**
