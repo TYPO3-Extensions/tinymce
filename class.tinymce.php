@@ -109,9 +109,6 @@ class tinyMCE {
 	 * @return string
 	 */
 	protected function buildConfigString($loadConfigurationWithTimer = FALSE) {
-		$configuration = $this->tinymceConfiguration['preJS'];
-		$configuration .= "\n" . 'var executeTinymceInit = function() {' . "\n" . 'tinymce.init({' . "\n";
-
 //		$configurationOptions = array();
 //		foreach ($this->tinymceConfiguration['strings'] as $option => $value) {
 //			$value = '\'' . str_replace('\'', '\\\'', $value) . '\'';
@@ -142,10 +139,21 @@ class tinyMCE {
 //		}
 //		$configuration .= implode(",\n", $configurationOptions);
 
-		$configuration .= $this->replaceTypo3Paths($this->tinymceConfiguration['configurationData']);
-		$configuration .= "\n" . '});' . "\n" . '};executeTinymceInit();' . "\n";
+		$configuration = $this->tinymceConfiguration['preJS'];
+		$configuration .= '
+			var executeTinymceInit = function() {
+				if (!tinymce || !tinymce.init) {
+					return;
+				}
+
+			 	tinymce.init({
+			 		' . $this->replaceTypo3Paths($this->tinymceConfiguration['configurationData']) . '
+			 	});
+			 };
+			 executeTinymceInit();
+		';
 		if ($loadConfigurationWithTimer) {
-			$configuration .= "\n" . 'window.setInterval(executeTinymceInit, 1000);' . "\n";
+			$configuration .= 'window.setInterval(executeTinymceInit, 1000);' . "\n";
 		}
 		$configuration .= $this->tinymceConfiguration['postJS'];
 
