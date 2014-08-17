@@ -157,7 +157,7 @@ class tinyMCE {
 		}
 		$configuration .= $this->tinymceConfiguration['postJS'];
 
-		$filename = 'tinymceConfiguration' . md5($configuration) . '.js';
+		$filename = 'tinymceConfiguration' . sha1($configuration) . '.js';
 		$file = PATH_site . 'typo3temp/' . $filename;
 		if (!is_file($file)) {
 			file_put_contents($file, $configuration);
@@ -292,11 +292,13 @@ class tinyMCE {
 	 * @return string
 	 */
 	protected function replaceTypo3Paths($configuration) {
-		return preg_replace_callback(
-			'/["\'](EXT:[^"\']*)["\']/is', function ($value) {
-				return '\'' . $this->getPath($value[1], TRUE) . '\'';
-			}, $configuration
-		);
+		$replacementFunction = function ($value) {
+			// getPath should be used, but this causes a php exception with PHP 5.3 as $this isn't set there
+			return '\'' . t3lib_div::getIndpEnv('TYPO3_SITE_URL') .
+			str_replace(PATH_site, '', t3lib_div::getFileAbsFileName($value[1])) . '\'';
+		};
+
+		return preg_replace_callback('/["\'](EXT:[^"\']*)["\']/is', $replacementFunction, $configuration);
 	}
 
 	/**
