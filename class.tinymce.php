@@ -103,12 +103,12 @@ class tinyMCE {
 	}
 
 	/**
-	 * Returns a file that contains the the tinymce configuration
+	 * Returns a file that contains the tinymce configuration
 	 *
 	 * @param bool $loadConfigurationWithTimer useful in relation with AJAX
 	 * @return string
 	 */
-	protected function buildConfigString($loadConfigurationWithTimer = FALSE) {
+	protected function getConfiguration($loadConfigurationWithTimer = FALSE) {
 //		$configurationOptions = array();
 //		foreach ($this->tinymceConfiguration['strings'] as $option => $value) {
 //			$value = '\'' . str_replace('\'', '\\\'', $value) . '\'';
@@ -182,7 +182,7 @@ class tinyMCE {
 			$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
 			$output = '<script type="text/javascript" src="' . $script . '"></script>';
 
-			$script = $this->buildConfigString($loadConfigurationWithTimer);
+			$script = $this->getConfiguration($loadConfigurationWithTimer);
 			$output .= '<script type="text/javascript" src="' . $script . '"></script>';
 		}
 
@@ -205,7 +205,7 @@ class tinyMCE {
 		$script = $GLOBALS['BACK_PATH'] . t3lib_extMgm::extRelPath('tinymce') . 'tinymce/tinymce.min.js';
 		$pageRenderer->addJsLibrary('tinymce', $script, 'text/javascript', FALSE, TRUE, '', TRUE);
 
-		$script = $this->buildConfigString($loadConfigurationWithTimer);
+		$script = $this->getConfiguration($loadConfigurationWithTimer);
 		$pageRenderer->addJsFile($script, 'text/javascript', FALSE, TRUE, '', TRUE);
 	}
 
@@ -310,7 +310,7 @@ class tinyMCE {
 	protected function getPath($relativePath, $returnWithDomain = FALSE) {
 		$finalPath = $absolutePath = t3lib_div::getFileAbsFileName($relativePath);
 		if ($returnWithDomain) {
-			$finalPath = t3lib_div::getIndpEnv('TYPO3_REQUEST_HOST') . '/' . str_replace(PATH_site, '', $absolutePath);
+			$finalPath = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . str_replace(PATH_site, '', $absolutePath);
 		}
 		return $finalPath;
 	}

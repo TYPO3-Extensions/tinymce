@@ -3,7 +3,7 @@
 /***************************************************************
  * Extension Manager/Repository config file for ext "tinymce".
  *
- * Auto generated 30-07-2014 20:40
+ * Auto generated 05-08-2014 22:42
  *
  * Manual updates:
  * Only the data in the array - everything else is removed by next
